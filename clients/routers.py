@@ -48,15 +48,14 @@ def platform_summary(platform):
 
 @clients.route('/geral/', methods=('GET', ))
 def general():
-    data = [
-        ['Name', 'E-mail', 'Linkedin'],
-        ['Matheus Simão Caixeta', 'matheussimao2101@gmail.com', 'https://www.linkedin.com/in/matheussimaocaixeta/']
-    ]
+    api_proxy = current_app.config['API_PROXY']
+
+    platform_ads_insights = api_proxy.get_general_ads()
 
     return Response(
-        convert_csv(data),
+        convert_csv(platform_ads_insights),
         mimetype='text/csv',
-        headers={"Content-Disposition": "attachment; filename=data.csv"}
+        headers={"Content-Disposition": "attachment; filename=plataform_ads_general.csv"}
     )
 
 

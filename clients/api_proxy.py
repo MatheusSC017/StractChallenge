@@ -7,6 +7,49 @@ class SocialMediaProxy:
     def __init__(self, authorization):
         self.authorization = authorization
 
+    def get_general_ads(self):
+        try:
+            platforms = self._get_platforms()
+            platforms = [p.get('value') for p in platforms]
+
+            all_fields_names = []
+            all_fields_keys = []
+            for platform in platforms:
+                fields = self._get_fields(platform)
+                for field in fields:
+                    if field.get('text') not in all_fields_names:
+                        all_fields_names.append(field.get('text'))
+                        all_fields_keys.append(field.get('value'))
+
+            platform_ads_insights = [['Platform', 'Account', *all_fields_names], ]
+            for platform in platforms:
+                accounts = self._get_accounts(platform)
+                fields = self._get_fields(platform)
+                fields_keys = [f.get('value') for f in fields]
+
+                for account in accounts:
+                    insights = self._get_insights(platform, account.get('id'), account.get('token'), fields_keys)
+                    for insight in insights:
+                        all_fields_insights = [None] * (len(all_fields_names) + 2)
+                        all_fields_insights[0] = platform
+                        all_fields_insights[1] = account.get('name')
+
+                        for field in fields:
+                            all_fields_insights[all_fields_names.index(field.get('text')) + 2] = insight.get(field.get('value'))
+
+                        cost_per_click_index = all_fields_names.index('Cost Per Click') + 2
+                        if all_fields_insights[cost_per_click_index] is None:
+                            spend_index = all_fields_names.index('Spend') + 2
+                            clicks_index = all_fields_names.index('Clicks') + 2
+                            all_fields_insights[cost_per_click_index] = round(all_fields_insights[spend_index] / all_fields_insights[clicks_index], 3)
+
+                        platform_ads_insights.append(all_fields_insights)
+
+            return platform_ads_insights
+
+        except Exception as e:
+            raise Exception(f'Error getting ads: {e}')
+
     def get_platform_ads(self, platform, summary=False):
         try:
             platforms = self._get_platforms()
@@ -18,8 +61,7 @@ class SocialMediaProxy:
             fields_names = [f.get('text') for f in fields]
             fields_keys = [f.get('value') for f in fields]
 
-            platform_ads_insights = []
-            platform_ads_insights.append(['Platform', 'Account', *fields_names])
+            platform_ads_insights = [['Platform', 'Account', *fields_names], ]
             for account in accounts:
                 insights = self._get_insights(platform, account.get('id'), account.get('token'), fields_keys)
                 if summary:
@@ -89,4 +131,5 @@ class SocialMediaProxy:
 if __name__ == '__main__':
     social_media_proxy = SocialMediaProxy('ProcessoSeletivoStract2025')
 
-    print(social_media_proxy.get_platform_ads('meta_ads', True) )
+    # print(social_media_proxy.get_platform_ads('meta_ads', True))
+    print(social_media_proxy.get_general_ads())
