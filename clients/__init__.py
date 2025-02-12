@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from flask import Flask
-from . import routers
+from . import routers, api_proxy
 
 load_dotenv()
 
@@ -20,7 +20,7 @@ def configure_app(app):
         raise ValueError("Missing required configuration values")
 
     app.config.from_mapping(
-        AUTHORIZATION_TOKEN=authorization_token
+        API_PROXY=api_proxy.SocialMediaProxy(authorization_token)
     )
 
     try:
