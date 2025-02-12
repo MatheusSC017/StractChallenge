@@ -1,33 +1,74 @@
 from flask.blueprints import Blueprint
-from flask import render_template, current_app
+from flask import Response, current_app
+from .utils import convert_csv
+
 
 clients = Blueprint('clients', __name__, template_folder='templates')
 
 
 @clients.route('/', methods=('GET', ))
 def index():
-    return render_template('index.html')
+    data = [
+        ['Name', 'E-mail', 'Linkedin'],
+        ['Matheus Simão Caixeta', 'matheussimao2101@gmail.com', 'https://www.linkedin.com/in/matheussimaocaixeta/']
+    ]
+
+    return Response(
+        convert_csv(data),
+        mimetype='text/csv',
+        headers={"Content-Disposition": "attachment; filename=profile.csv"}
+    )
 
 
 @clients.route('/<platform>/', methods=('GET', ))
 def platform(platform):
     api_proxy = current_app.config['API_PROXY']
 
-    headers, platform_ads_insights = api_proxy.get_platform_ads(platform)
+    platform_ads_insights = api_proxy.get_platform_ads(platform)
 
-    return render_template('table.html', headers=headers, values=platform_ads_insights)
+    return Response(
+        convert_csv(platform_ads_insights),
+        mimetype='text/csv',
+        headers={"Content-Disposition": "attachment; filename=plataform_ads_insights.csv"}
+    )
 
 
 @clients.route('/<platform>/resumo', methods=('GET', ))
 def platform_summary(platform):
-    return render_template('index.html')
+    api_proxy = current_app.config['API_PROXY']
+
+    platform_ads_summary = api_proxy.get_platform_ads(platform, True)
+
+    return Response(
+        convert_csv(platform_ads_summary),
+        mimetype='text/csv',
+        headers={"Content-Disposition": "attachment; filename=plataform_ads_summary.csv"}
+    )
 
 
 @clients.route('/geral/', methods=('GET', ))
 def general():
-    return render_template('index.html')
+    data = [
+        ['Name', 'E-mail', 'Linkedin'],
+        ['Matheus Simão Caixeta', 'matheussimao2101@gmail.com', 'https://www.linkedin.com/in/matheussimaocaixeta/']
+    ]
+
+    return Response(
+        convert_csv(data),
+        mimetype='text/csv',
+        headers={"Content-Disposition": "attachment; filename=data.csv"}
+    )
 
 
 @clients.route('/geral/resumo', methods=('GET', ))
 def general_summary():
-    return render_template('index.html')
+    data = [
+        ['Name', 'E-mail', 'Linkedin'],
+        ['Matheus Simão Caixeta', 'matheussimao2101@gmail.com', 'https://www.linkedin.com/in/matheussimaocaixeta/']
+    ]
+
+    return Response(
+        convert_csv(data),
+        mimetype='text/csv',
+        headers={"Content-Disposition": "attachment; filename=data.csv"}
+    )

@@ -1,4 +1,3 @@
-from flask import current_app
 import requests
 
 
@@ -8,7 +7,7 @@ class SocialMediaProxy:
     def __init__(self, authorization):
         self.authorization = authorization
 
-    def get_platform_ads(self, platform):
+    def get_platform_ads(self, platform, summary=False):
         try:
             platforms = self._get_platforms()
             if platform not in [p.get('value') for p in platforms]:
@@ -20,13 +19,24 @@ class SocialMediaProxy:
             fields_keys = [f.get('value') for f in fields]
 
             platform_ads_insights = []
+            platform_ads_insights.append(['Platform', 'Account', *fields_names])
             for account in accounts:
                 insights = self._get_insights(platform, account.get('id'), account.get('token'), fields_keys)
-                for insight in insights:
-                    platform_ads_insights.append([platform, account.get('name'), *[insight.get(key) for key in fields_keys]])
+                if summary:
+                    account_insight = {}
+                    for insight in insights:
+                        for key in fields_keys:
+                            if type(insight.get(key)) is not str:
+                                if key not in account_insight:
+                                    account_insight[key] = 0
+                                account_insight[key] += insight.get(key)
+                    platform_ads_insights.append([platform, account.get('name'), *[account_insight.get(key, '') for key in fields_keys]])
+                else:
+                    for insight in insights:
+                        platform_ads_insights.append([platform, account.get('name'), *[insight.get(key) for key in fields_keys]])
 
-            headers = ['Platform', 'Ad Name', *fields_names]
-            return headers, platform_ads_insights
+
+            return platform_ads_insights
 
         except Exception as e:
             raise Exception(f'Error getting ads from platform {platform}: {e}')
@@ -79,4 +89,4 @@ class SocialMediaProxy:
 if __name__ == '__main__':
     social_media_proxy = SocialMediaProxy('ProcessoSeletivoStract2025')
 
-    print(social_media_proxy.get_platform_ads('meta_ads'))
+    print(social_media_proxy.get_platform_ads('meta_ads', True) )
