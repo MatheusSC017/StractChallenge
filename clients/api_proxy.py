@@ -13,13 +13,11 @@ class SocialMediaProxy:
             platforms = [p.get('value') for p in platforms]
 
             all_fields_names = []
-            all_fields_keys = []
             for platform in platforms:
                 fields = self._get_fields(platform)
                 for field in fields:
                     if field.get('text') not in all_fields_names:
                         all_fields_names.append(field.get('text'))
-                        all_fields_keys.append(field.get('value'))
 
             platform_ads_insights = [['Platform', 'Account', *all_fields_names], ]
             for platform in platforms:
@@ -85,31 +83,30 @@ class SocialMediaProxy:
                 raise Exception('Platform not found')
 
             accounts = self._get_accounts(platform)
-            fields = self._get_fields(platform)
-            fields_names = [f.get('text') for f in fields]
-            fields_keys = [f.get('value') for f in fields]
+            fields = {field.get('value'): field.get('text') for field in self._get_fields(platform)}
 
-            platform_ads_insights = [['Platform', 'Account', *fields_names], ]
+            platform_ads_insights = [['Platform', 'Account', *fields.values()], ]
             for account in accounts:
-                insights = self._get_insights(platform, account.get('id'), account.get('token'), fields_keys)
-                if summary:
-                    account_insight = {}
-                    for insight in insights:
-                        for key in fields_keys:
-                            if type(insight.get(key)) is not str:
-                                if key not in account_insight:
-                                    account_insight[key] = 0
-                                account_insight[key] += insight.get(key)
-                    platform_ads_insights.append([platform, account.get('name'), *[account_insight.get(key, '') for key in fields_keys]])
-                else:
-                    for insight in insights:
-                        platform_ads_insights.append([platform, account.get('name'), *[insight.get(key) for key in fields_keys]])
-
+                platform_ads_insights.extend(self._get_account_insights(platform, account, fields.keys(), summary))
 
             return platform_ads_insights
 
         except Exception as e:
             raise Exception(f'Error getting ads from platform {platform}: {e}')
+
+    def _get_account_insights(self, platform, account, fields, summary=False):
+        account_insights = []
+        insights = self._get_insights(platform, account.get('id'), account.get('token'), fields)
+        for insight in insights:
+            account_insights.append([platform, account.get('name'), *[insight.get(key) for key in fields]])
+
+        if summary:
+            new_account_insights = [platform, account.get('name'), *([None] * len(fields))]
+            for i in range(2, len(fields) + 2):
+                if type(account_insights[0][i]) in [int, float]:
+                    new_account_insights[i] = sum([row[i] for row in account_insights])
+            account_insights = [new_account_insights, ]
+        return account_insights
 
     def _get_platforms(self):
         response = requests.get('https://sidebar.stract.to/api/platforms',
@@ -160,4 +157,4 @@ if __name__ == '__main__':
     social_media_proxy = SocialMediaProxy('ProcessoSeletivoStract2025')
 
     print(social_media_proxy.get_platform_ads('meta_ads', True))
-    print(social_media_proxy.get_general_ads(True))
+    # print(social_media_proxy.get_general_ads(True))
