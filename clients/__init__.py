@@ -1,9 +1,6 @@
 import os
-from dotenv import load_dotenv
 from flask import Flask
 from . import routers, api_proxy
-
-load_dotenv()
 
 
 def create_app():
@@ -14,13 +11,8 @@ def create_app():
 
 
 def configure_app(app):
-    authorization_token = os.getenv('AUTHORIZATION_TOKEN')
-
-    if not authorization_token:
-        raise ValueError("Missing required configuration values")
-
     app.config.from_mapping(
-        API_PROXY=api_proxy.SocialMediaProxy(authorization_token)
+        API_PROXY=api_proxy.SocialMediaProxy('ProcessoSeletivoStract2025')
     )
 
     try:
