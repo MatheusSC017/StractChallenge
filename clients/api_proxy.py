@@ -7,7 +7,7 @@ class SocialMediaProxy:
     def __init__(self, authorization):
         self.authorization = authorization
 
-    def get_general_ads(self):
+    def get_general_ads(self, summary=False):
         try:
             platforms = self._get_platforms()
             platforms = [p.get('value') for p in platforms]
@@ -25,25 +25,53 @@ class SocialMediaProxy:
             for platform in platforms:
                 accounts = self._get_accounts(platform)
                 fields = self._get_fields(platform)
+                fields_text = [f.get('text') for f in fields]
                 fields_keys = [f.get('value') for f in fields]
 
-                for account in accounts:
-                    insights = self._get_insights(platform, account.get('id'), account.get('token'), fields_keys)
-                    for insight in insights:
-                        all_fields_insights = [None] * (len(all_fields_names) + 2)
-                        all_fields_insights[0] = platform
-                        all_fields_insights[1] = account.get('name')
+                if summary:
+                    platform_insights_total = [None] * (len(all_fields_names) + 2)
+                    platform_insights_total[0] = platform
+                    counter = 0
+                    for account in accounts:
+                        insights = self._get_insights(platform, account.get('id'), account.get('token'), fields_keys)
+                        for insight in insights:
 
-                        for field in fields:
-                            all_fields_insights[all_fields_names.index(field.get('text')) + 2] = insight.get(field.get('value'))
+                            for field in fields:
+                                if type(insight.get(field.get('value'))) not in [str, None, ]:
+                                    field_index = all_fields_names.index(field.get('text')) + 2
+                                    if platform_insights_total[field_index] is None:
+                                        platform_insights_total[field_index] = 0
+                                    platform_insights_total[field_index] += insight.get(field.get('value'))
 
-                        cost_per_click_index = all_fields_names.index('Cost Per Click') + 2
-                        if all_fields_insights[cost_per_click_index] is None:
-                            spend_index = all_fields_names.index('Spend') + 2
-                            clicks_index = all_fields_names.index('Clicks') + 2
-                            all_fields_insights[cost_per_click_index] = round(all_fields_insights[spend_index] / all_fields_insights[clicks_index], 3)
+                            if 'Cost Per Click' not in fields_text:
+                                field_index = all_fields_names.index('Cost Per Click') + 2
+                                if platform_insights_total[field_index] is None:
+                                    platform_insights_total[field_index] = 0
+                                platform_insights_total[field_index] += round(insight.get(fields_keys[fields_text.index('Spend')]) / insight.get(fields_keys[fields_text.index('Clicks')]))
+                            counter += 1
 
-                        platform_ads_insights.append(all_fields_insights)
+                    field_index = all_fields_names.index('Cost Per Click') + 2
+                    platform_insights_total[field_index] = round(platform_insights_total[field_index] / counter, 3)
+                    platform_ads_insights.append(platform_insights_total)
+                else:
+                    for account in accounts:
+                        insights = self._get_insights(platform, account.get('id'), account.get('token'), fields_keys)
+                        for insight in insights:
+                            all_fields_insights = [None] * (len(all_fields_names) + 2)
+                            all_fields_insights[0] = platform
+                            all_fields_insights[1] = account.get('name')
+
+                            for field in fields:
+                                all_fields_insights[all_fields_names.index(field.get('text')) + 2] = insight.get(field.get('value'))
+
+                            cost_per_click_index = all_fields_names.index('Cost Per Click') + 2
+                            if all_fields_insights[cost_per_click_index] is None:
+                                spend_index = all_fields_names.index('Spend') + 2
+                                clicks_index = all_fields_names.index('Clicks') + 2
+                                all_fields_insights[cost_per_click_index] = round(all_fields_insights[spend_index] / all_fields_insights[clicks_index], 3)
+
+                            platform_ads_insights.append(all_fields_insights)
+
 
             return platform_ads_insights
 
@@ -131,5 +159,5 @@ class SocialMediaProxy:
 if __name__ == '__main__':
     social_media_proxy = SocialMediaProxy('ProcessoSeletivoStract2025')
 
-    # print(social_media_proxy.get_platform_ads('meta_ads', True))
-    print(social_media_proxy.get_general_ads())
+    print(social_media_proxy.get_platform_ads('meta_ads', True))
+    print(social_media_proxy.get_general_ads(True))

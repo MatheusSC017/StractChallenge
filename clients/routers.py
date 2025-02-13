@@ -29,7 +29,7 @@ def platform(platform):
     return Response(
         convert_csv(platform_ads_insights),
         mimetype='text/csv',
-        headers={"Content-Disposition": "attachment; filename=plataform_ads_insights.csv"}
+        headers={"Content-Disposition": "attachment; filename=platform_ads_insights.csv"}
     )
 
 
@@ -42,7 +42,7 @@ def platform_summary(platform):
     return Response(
         convert_csv(platform_ads_summary),
         mimetype='text/csv',
-        headers={"Content-Disposition": "attachment; filename=plataform_ads_summary.csv"}
+        headers={"Content-Disposition": "attachment; filename=platform_ads_summary.csv"}
     )
 
 
@@ -55,19 +55,18 @@ def general():
     return Response(
         convert_csv(platform_ads_insights),
         mimetype='text/csv',
-        headers={"Content-Disposition": "attachment; filename=plataform_ads_general.csv"}
+        headers={"Content-Disposition": "attachment; filename=platform_ads_general.csv"}
     )
 
 
 @clients.route('/geral/resumo', methods=('GET', ))
 def general_summary():
-    data = [
-        ['Name', 'E-mail', 'Linkedin'],
-        ['Matheus Simão Caixeta', 'matheussimao2101@gmail.com', 'https://www.linkedin.com/in/matheussimaocaixeta/']
-    ]
+    api_proxy = current_app.config['API_PROXY']
+
+    platform_ads_summary = api_proxy.get_general_ads(True)
 
     return Response(
-        convert_csv(data),
+        convert_csv(platform_ads_summary),
         mimetype='text/csv',
-        headers={"Content-Disposition": "attachment; filename=data.csv"}
+        headers={"Content-Disposition": "attachment; filename=platform_ads_general_summary.csv"}
     )
